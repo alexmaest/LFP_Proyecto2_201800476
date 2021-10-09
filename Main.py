@@ -57,7 +57,7 @@ while Ejecucion:
 
     if opcion == "1":
         #name = graphicBrowser()
-        name = "C:/Users/alexi/Downloads/single.lfp"
+        name = "C:/Users/alexi/Downloads/prueba.lfp"
         returned = read(name)
 
     elif opcion == "2":
