@@ -5,10 +5,13 @@ class AnalizadorSintactico:
     tokens = []
     Errores = []
     ErrorBoolean = False
+    boolUp = False
+    boolLimitator = False
     position = 0
     preanalisis = ""
     types = Token("lexema", 0, 0, 0)
     ultimoCont = 0
+    limitators = [types.CORCHETE_CIERRA, types.LLAVE_CIERRA, types.PUNTO_Y_COMA]
 
     def __init__(self, tokens):
         self.tokens = tokens
@@ -18,37 +21,32 @@ class AnalizadorSintactico:
 
     def Match(self, singleToken):
         if self.preanalisis != singleToken:
-            if self.preanalisis != self.types.ULTIMO:
-                self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
-                self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
-                self.ErrorBoolean = True
-                print("Error en el Token " + self.preanalisis + ", se esperaba " + singleToken)
+            self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
+            self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
+            self.ErrorBoolean = True
+            self.boolLimitator = True
+            print("Error en el Token " + self.preanalisis + ", se esperaba " + singleToken)
+            if self.preanalisis in self.limitators:
+                self.boolLimitator = False
+                print("---------------------Limitador Detectado---------------------")
+            if self.boolUp:
                 self.position += 1
-                try:
-                    self.preanalisis = self.tokens[self.position].getType()
-                except:
-                    self.position -= 2
-                    self.preanalisis = self.tokens[self.position].getType()
+                self.preanalisis = self.tokens[self.position].getType()
             else:
-                if self.ultimoCont == 0:
-                    if self.preanalisis != self.types.ULTIMO:
-                        self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
-                        self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
-                        self.ErrorBoolean = True
-                        print("Error en el Token " + self.preanalisis + ", se esperaba " + singleToken)
-                        self.position += 2
-                        try:
-                            self.preanalisis = self.tokens[self.position].getType()
-                        except:
-                            self.position -= 2
-                            self.preanalisis = self.tokens[self.position].getType()
-                        self.ultimoCont += 1
-                    else:
-                        pass
-
+                self.preanalisis = self.tokens[self.position].getType()
 
         elif self.preanalisis != self.types.ULTIMO:
             print("Token correcto: " + str(self.preanalisis))
+            if self.boolLimitator == True:
+                if self.preanalisis in self.limitators:
+                    self.boolLimitator = False
+                    print("---------------------Limitador Detectado---------------------")
+                    self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
+                    self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
+                else:
+                    print("******Error Agregado = " + self.preanalisis + "******")
+                    self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
+                    self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
             self.position += 1
             self.preanalisis = self.tokens[self.position].getType()
         else:
@@ -57,57 +55,86 @@ class AnalizadorSintactico:
             print("\n")
 
     def Instrucciones(self):
-
         #-------------------------Arreglos-------------------------
         if self.preanalisis == self.types.CLAVES:
+            self.boolUp = True
             self.Match(self.types.CLAVES)
             self.Match(self.types.IGUAL)
             self.Match(self.types.CORCHETE_ABRE)
             self.ListaStrings()
             self.Match(self.types.CORCHETE_CIERRA)
+            self.Instrucciones()
         
         elif self.preanalisis == self.types.REGISTROS:
+            self.boolUp = True
             self.Match(self.types.REGISTROS)
             self.Match(self.types.IGUAL)
             self.Match(self.types.CORCHETE_ABRE)
             self.ListaRegistros()
             self.Match(self.types.CORCHETE_CIERRA)
+            self.Instrucciones()
 
         #-------------------------Comentarios-------------------------
         elif self.preanalisis == self.types.COMENTMULT:
+            self.boolUp = False
+
             self.Match(self.types.COMENTMULT)
+            self.Instrucciones()
 
         elif self.preanalisis == self.types.COMENTSIMPLE:
+            self.boolUp = False
+
             self.Match(self.types.COMENTSIMPLE)
+            self.Instrucciones()
 
         #-------------------------Funciones-------------------------
         elif self.preanalisis == self.types.IMPRIMIR:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.IMPRIMIRLN:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.CONTEO:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.PROMEDIO:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.CONTARSI:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.DATOS:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.SUMAR:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.MAX:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.MIN:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
         elif self.preanalisis == self.types.EXPORTARREPORTE:
+            self.boolUp = False
             self.Funciones()
+            self.Instrucciones()
 
         #-------------------------Ultimo-------------------------
-        if self.preanalisis == self.types.ULTIMO:
-            self.Match(self.types.ULTIMO)
+        elif self.preanalisis == self.types.ULTIMO:
+                self.Match(self.types.ULTIMO)
 
-        #--------------------Más instrucciones--------------------
-        elif self.preanalisis != None:
+        else:
+            self.Match(self.types.UNKNOWN)
             self.Instrucciones()
 
     def ListaStrings(self):
@@ -172,9 +199,8 @@ class AnalizadorSintactico:
             self.Match(self.types.CONTARSI)
             self.Match(self.types.PARENTESIS_ABRE)
             self.Match(self.types.STRING)
-            if self.preanalisis == self.types.COMMA:
-                self.Match(self.types.COMMA)
-                self.ListaValores()
+            self.Match(self.types.COMMA)
+            self.Match(self.types.NUMBER)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
 
@@ -210,5 +236,4 @@ class AnalizadorSintactico:
             self.Match(self.types.PARENTESIS_ABRE)
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
-            self.Match(self.types.PUNTO_Y_COMA)
-        
+            self.Match(self.types.PUNTO_Y_COMA)     

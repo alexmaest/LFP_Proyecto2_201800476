@@ -138,7 +138,7 @@ class AnalizadorLexico:
                     elif current == "$" and index == textLen - 1:
                         self.printTokens()
                         print("\n")
-                        print("Analisis Finalizado")
+                        print("Analisis Léxico Finalizado")
                         print("\n")
                         break
                     else:
