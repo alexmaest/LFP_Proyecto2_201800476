@@ -17,7 +17,7 @@ class AnalizadorLexico:
         self.row = 1
         self.column = 0
         self.comilla = 1
-        text.append("$")
+        text = text + "$"
         #print(text)
         current = ""
         textLen = len(text)
@@ -59,7 +59,7 @@ class AnalizadorLexico:
                        self.state = 8
                        self.column += 1
                        self.lexema += current
-                       self.commilla = 1
+                       self.comilla = 1
                        continue
                     elif current == "=":
                         #print("Entra -> Current: " + str(current))
