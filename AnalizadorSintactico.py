@@ -1,4 +1,3 @@
-from tkinter.constants import S
 from Token import Token
 from ErrorSintactico import ErrorSintactico
 from reporteRegistros import reporteRegistros
@@ -33,7 +32,7 @@ class AnalizadorSintactico:
 
     def Match(self, singleToken):
         if self.preanalisis != singleToken:
-            self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
+            self.Errores.append(ErrorSintactico(self.tokens[self.position].getType(), self.tokens[self.position].getLexema(), "Sintactico",
             self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
             self.ErrorBoolean = True
             self.boolLimitator = True
@@ -54,11 +53,11 @@ class AnalizadorSintactico:
                 if self.preanalisis in self.limitators:
                     self.boolLimitator = False
                     #print("---------------------Limitador Detectado---------------------")
-                    self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
+                    self.Errores.append(ErrorSintactico(self.tokens[self.position].getType(), self.tokens[self.position].getLexema(), "Sintactico",
                     self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
                 else:
                     #print("******Error Agregado = " + self.preanalisis + "******")
-                    self.Errores.append(ErrorSintactico(self.tokens[self.position].getLexema(), "Sintactico", "Se esperaba " + singleToken,
+                    self.Errores.append(ErrorSintactico(self.tokens[self.position].getType(), self.tokens[self.position].getLexema(), "Sintactico",
                     self.tokens[self.position].getRow(), self.tokens[self.position].getColumns()))
             self.position += 1
             self.preanalisis = self.tokens[self.position].getType()
@@ -68,6 +67,7 @@ class AnalizadorSintactico:
             print("\n")
 
     def Instrucciones(self):
+        self.boolUp = False
         #-------------------------Arreglos-------------------------
         if self.preanalisis == self.types.CLAVES:
             self.Claves = []
@@ -149,6 +149,7 @@ class AnalizadorSintactico:
 
         else:
             self.Match(self.types.UNKNOWN)
+            self.boolUp = True
             self.Instrucciones()
 
     def ListaStrings(self):
@@ -164,6 +165,7 @@ class AnalizadorSintactico:
         if self.preanalisis == self.types.COMMA:
             self.Match(self.types.COMMA)
             self.ListaStrings()
+            
     
     def ListaRegistros(self):
         self.Match(self.types.LLAVE_ABRE)
@@ -181,40 +183,43 @@ class AnalizadorSintactico:
     
     def ListaValores(self):
         tempLexema = self.tokens[self.position].getLexema()
+        
         if self.preanalisis == self.types.NUMBER:
-            if self.functionError == False:
-                self.singleRegistros.append(tempLexema)
-            else:
-                self.reportError == True
+            self.singleRegistros.append(tempLexema)
             self.Match(self.types.NUMBER)
             if self.preanalisis == self.types.COMMA:
                 self.Match(self.types.COMMA)
                 self.ListaValores()
+
+
         elif self.preanalisis == self.types.STRING:
-            if self.functionError == False:
-                self.singleRegistros.append(tempLexema)
-            else:
-                self.reportError == True
+            self.singleRegistros.append(tempLexema)
             self.Match(self.types.STRING)
             if self.preanalisis == self.types.COMMA:
                 self.Match(self.types.COMMA)
                 self.ListaValores()
+
         elif self.preanalisis == self.types.DOUBLE:
-            if self.functionError == False:
-                self.singleRegistros.append(tempLexema)
-            else:
-                self.reportError == True
+            self.singleRegistros.append(tempLexema)
             self.Match(self.types.DOUBLE)
             if self.preanalisis == self.types.COMMA:
                 self.Match(self.types.COMMA)
                 self.ListaValores()
+        else:
+            self.Match(self.types.UNKNOWN)
+            self.boolUp = True
+            self.reportError == True
     
     def Funciones(self):
         if self.preanalisis == self.types.IMPRIMIR:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.IMPRIMIR)
             self.Match(self.types.PARENTESIS_ABRE)
-            letras = self.tokens[self.position].getLexema()
+            try:
+                letras = self.tokens[self.position].getLexema()
+            except:
+                letras = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
@@ -225,21 +230,25 @@ class AnalizadorSintactico:
             self.functionError = False
 
         elif self.preanalisis == self.types.IMPRIMIRLN:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.IMPRIMIRLN)
             self.Match(self.types.PARENTESIS_ABRE)
-            letras2 = self.tokens[self.position].getLexema()
+            try:
+                letras2 = self.tokens[self.position].getLexema()
+            except:
+                letras2 = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
             if self.functionError == False:
                 lPrint2 = letras2.replace("\"", "")
-                self.consoleText += lPrint2 + "\n"
+                self.consoleText += lPrint2 + "\n" 
                 print(lPrint2)
             self.functionError = False
 
         elif self.preanalisis == self.types.CONTEO:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.CONTEO)
             self.Match(self.types.PARENTESIS_ABRE)
             self.Match(self.types.PARENTESIS_CIERRA)
@@ -250,10 +259,14 @@ class AnalizadorSintactico:
             self.functionError = False
 
         elif self.preanalisis == self.types.PROMEDIO:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.PROMEDIO)
             self.Match(self.types.PARENTESIS_ABRE)
-            arg1 = self.tokens[self.position].getLexema()
+            try:
+                arg1 = self.tokens[self.position].getLexema()
+            except:
+                arg1 = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
@@ -277,17 +290,24 @@ class AnalizadorSintactico:
                 if found == False:
                     text = "Argumento de la función promedio() no encontrado"
                     self.consoleText += text + "\n"
-            promCont = 0
             self.functionError = False
 
         elif self.preanalisis == self.types.CONTARSI:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.CONTARSI)
             self.Match(self.types.PARENTESIS_ABRE)
-            arg1 = self.tokens[self.position].getLexema()
+            try:
+                arg1 = self.tokens[self.position].getLexema()
+            except:
+                arg1 = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.COMMA)
-            arg2 = self.tokens[self.position].getLexema()
+            try:
+                arg2 = self.tokens[self.position].getLexema()
+            except:
+                arg2 = ""
+                self.functionError == True
             self.ListaValores()
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
@@ -311,11 +331,10 @@ class AnalizadorSintactico:
                 if found == False:
                     text = "Argumento de la función contarsi() no encontrado"
                     self.consoleText += text + "\n"
-            contarCont = 0
             self.functionError = False
 
         elif self.preanalisis == self.types.DATOS:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.DATOS)
             self.Match(self.types.PARENTESIS_ABRE)
             self.Match(self.types.PARENTESIS_CIERRA)
@@ -335,10 +354,14 @@ class AnalizadorSintactico:
             self.functionError = False
 
         elif self.preanalisis == self.types.SUMAR:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.SUMAR)
             self.Match(self.types.PARENTESIS_ABRE)
-            arg1 = self.tokens[self.position].getLexema()
+            try:
+                arg1 = self.tokens[self.position].getLexema()
+            except:
+                arg1 = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
@@ -363,10 +386,14 @@ class AnalizadorSintactico:
             self.functionError = False
 
         elif self.preanalisis == self.types.MAX:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.MAX)
             self.Match(self.types.PARENTESIS_ABRE)
-            arg1 = self.tokens[self.position].getLexema()
+            try:
+                arg1 = self.tokens[self.position].getLexema()
+            except:
+                arg1 = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
@@ -394,10 +421,14 @@ class AnalizadorSintactico:
             self.functionError = False
 
         elif self.preanalisis == self.types.MIN:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.MIN)
             self.Match(self.types.PARENTESIS_ABRE)
-            arg1 = self.tokens[self.position].getLexema()
+            try:
+                arg1 = self.tokens[self.position].getLexema()
+            except:
+                arg1 = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)
@@ -430,10 +461,14 @@ class AnalizadorSintactico:
             self.functionError = False
             
         elif self.preanalisis == self.types.EXPORTARREPORTE:
-            self.boolUp = True
+            self.boolUp = False
             self.Match(self.types.EXPORTARREPORTE)
             self.Match(self.types.PARENTESIS_ABRE)
-            arg1 = self.tokens[self.position].getLexema()
+            try:
+                arg1 = self.tokens[self.position].getLexema()
+            except:
+                arg1 = ""
+                self.functionError == True
             self.Match(self.types.STRING)
             self.Match(self.types.PARENTESIS_CIERRA)
             self.Match(self.types.PUNTO_Y_COMA)     
@@ -452,3 +487,6 @@ class AnalizadorSintactico:
     
     def getConsoleText(self):
         return self.consoleText
+        
+    def getErrores(self):
+        return self.Errores

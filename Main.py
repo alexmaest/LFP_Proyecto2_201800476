@@ -1,5 +1,8 @@
 from AnalizadorLexico import AnalizadorLexico
 from AnalizadorSintactico import AnalizadorSintactico
+from tokenReport import tokenReport
+from failsReport import failsReport
+from treeReport import treeReport
 from tkinter import *
 import tkinter as t
 from tkinter import ttk
@@ -7,6 +10,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 
 tokens = []
+erroresSintacticos = []
 total_rows = 0
 total_columns = 0
 editorText = ""
@@ -76,12 +80,28 @@ def textConsole():
     global editorBox
     editorTempText = editorBox.get("1.0", "end-1c")
     analized = AnalizadorLexico(editorTempText)
-    tokens = analized.getTokens()
-    analizer = AnalizadorSintactico(tokens)
+    token = analized.getTokens()
+    global tokens
+    tokens = token
+    analizer = AnalizadorSintactico(token)
+    global erroresSintacticos
+    erroresSintacticos = analizer.getErrores()
     global consoleTextGlobal
     consoleTextGlobal = analizer.getConsoleText()
     global consoleBox
     consoleBox.insert(END, consoleTextGlobal)
+
+def nameReport():
+    name = str(reportName.get())
+    lowerName = name.lower()
+    global tokens
+    global erroresSintacticos
+    if lowerName == "tokens":
+        tokenReport(tokens)
+    elif lowerName == "errores":
+        failsReport(tokens, erroresSintacticos)
+    elif lowerName == "arbol de derivación":
+        treeReport(tokens)
 
 v = t.Tk()
 v.geometry("1080x720")
@@ -92,15 +112,15 @@ consoleBox = Text(v, fg="#ffffff", bg ="black", height=36, width=54)
 consoleBox.place(x=643, y=120)
 editorBox = Text(v, fg="#ffffff", bg ="#010030", height=38, width=80)
 editorBox.place(x=0, y=96)
-
 t.Label(v, text="", width=200, height=6, bg = "#162742").place(x=0, y=0)
 t.Label(v, text="ANALIZADORES", fg="#fcba03", width=15, height=3, bg = "#162742", font = "Helvetica 18 bold italic").place(x=0, y=5)
 t.Button(v, text="▶", width=2, font = "Helvetica 14 bold", bg='#fcba03', command=textConsole).place(x=720, y=27)
 t.Button(v, text="Cargar archivo", width=12, font = "Arial 12", command=browserFile).place(x=755, y=30)
-reportes = ["Errores", "Tokens", "Arbol de derivación"]
-ttk.Combobox(v, width=15, values=reportes).place(x=900, y=45)
-t.Label(v, text="Reportes", width=20, fg="#fcba03", bg = "#162742", font = "Helvetica 12").place(x=871, y=20)
-t.Button(v, width=1, text="⟳", font = "Helvetica 10 bold", bg='#fcba03').place(x=1015, y=42)
+t.Label(v, text="Reportes", width=20, fg="#fcba03", bg = "#162742", font = "Helvetica 12").place(x=871, y=17)
+reportes = ["Tokens", "Errores", "Arbol de derivación"]
+reportName = t.StringVar(v)
+ttk.Combobox(v, textvariable=reportName, width=15, values=reportes).place(x=900, y=42)
+t.Button(v, width=1, text="⟳", font = "Helvetica 10 bold", bg='#fcba03', command=nameReport).place(x=1015, y=39)
 t.Label(v, text="Consola", width=50, fg="black", bg = "dark gray", font = "Helvetica 12").place(x=643, y=95)
 t.Label(v, text = "   2021 - Proyecto 2 de Lenguajes formales y de programación", width=255, fg="black", bg = "#fcba03").place(x=0, y=700)
 

@@ -1,7 +1,7 @@
 class ErrorSintactico:
-    def __init__(self, lexema, tipo, descripcion, fila, columna):
+    def __init__(self, token, lexema, tipo, fila, columna):
+        self.token = token
         self.lexema = lexema
         self.tipo = tipo
-        self.descripcion = descripcion
         self.fila = fila
         self.columna = columna
